@@ -1,9 +1,9 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
-// 'listExample' is the name of this angular module example (also set in a <body> attribute in index.html)
+// 'listApp' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array or 'requires'
-// 'listExample.services' is found in services.js
-// 'listExample.controllers' is found in controllers.js
-angular.module('listExample', ['ionic', 'ngRoute', 'ngAnimate', 'listExample.services', 'listExample.controllers'])
+// 'listApp.services' is found in services.js
+// 'listApp.controllers' is found in controllers.js
+angular.module('listApp', ['ionic', 'ngRoute', 'ngAnimate', 'listApp.services', 'listApp.controllers'])
 
 .config(function ($compileProvider){
   // Needed for routing to work

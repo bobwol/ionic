@@ -1,4 +1,4 @@
-angular.module('listExample.controllers', [])
+angular.module('listApp.controllers', [])
 
 
 // Controller that fetches a list of data
