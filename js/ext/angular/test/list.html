@@ -58,34 +58,51 @@
     </style>
 
   </head>
-  <body>
+  <body ng-controller="TestCtrl">
 
-    <div ng-controller="TestCtrl" class="reveal-animation scroll-content">
-      <list is-editing="isEditingItems"
-            on-refresh-holding="almostRefreshing()"
-            on-refresh-opening="almostRefreshProjects(ratio)"
-            on-refresh="refreshProjects()"
-            refresh-complete="refreshComplete"
-            animation="my-repeat-animation"
-            delete-icon="icon ion-minus-circled"
-            reorder-icon="icon ion-navicon">
+    <header class="bar bar-header bar-positive">
+      <div class="buttons">
+        <button ng-click="toggleDelete()" class="button button-clear">{{ editBtnText }}</button>
+      </div>
+      <h1 class="title">Angular List Tests</h1>
+      <div class="buttons">
+        <button ng-click="toggleReorder()" class="button button-clear">{{ reorderBtnText }}</button>
+      </div>
+    </header>
 
-        <refresher></refresher>
+    <div class="content has-header">
 
-        <item 
-            ng-repeat="item in items" 
-            buttons="item.buttons"
-            can-delete="true"
-            can-reorder="true"
-            can-swipe="true"
-            on-delete="deleteProject(project)"
-            on-select="selectProject(project)">
-           <i class="icon ion-email ion-primary"></i>
-          {{item.text}}
-          <i class="{{item.icon}}"></i>
-        </item>
-      </list>
-      <button ng-click="edit()" class="button button-success">Edit</button>
+      <div class="reveal-animation">
+
+        <list show-delete="isDeletingItems"
+              show-reorder="isReorderingItems"
+              on-refresh-holding="refreshHolding()"
+              on-refresh-opening="refreshOpening(ratio)"
+              on-refresh="refreshItems()"
+              refresh-complete="refreshComplete"
+              animation="my-repeat-animation">
+
+          <refresher></refresher>
+
+          <item ng-repeat="item in items" 
+                item="item"
+                option-buttons="itemOptionButtons"
+
+                delete-icon="ion-minus-circled"
+                reorder-icon="ion-navicon"
+
+                can-delete="true"
+                can-reorder="true"
+                can-swipe="true"
+
+                on-delete="deleteItem(item)">
+            
+            {{ item.text }}
+
+          </item>
+        </list>
+      </div>
+
     </div>
 
     <script src="../../../../dist/js/ionic.js"></script>
@@ -96,54 +113,110 @@
     <script src="../../../../dist/js/angular/angular-sanitize.js"></script>
     <script src="../../../../dist/js/ionic-angular.js"></script>
     <script>
-      angular.module('navTest', ['ionic.ui.list', 'ionic.ui.content', 'ngAnimate'])
+      angular.module('navTest', ['ionic.ui.list', 'ionic.ui.content'])
 
       .controller('TestCtrl', function($scope, $timeout) {
-        $scope.refreshRatio = { ratio: 0 };
-        var removeItem = function(item) {
-          // Remove ourselves
-          $scope.items.splice($scope.items.indexOf(item), 1);
-        };
 
-        $scope.almostRefreshing = function() {
+
+        // Build Mock Data
+        function buildMockData() {
+          $scope.items = [];
+          for(var i = 0; i < 50; i++) {
+            $scope.items.push({
+              text: 'Item ' + i
+            });
+          }
+
+          // shows how individual items can have different options
+          $scope.items[0] = {
+            text: 'Item 0 has its own option buttons',
+            optionButtons: [
+              {
+                text: 'Special Button!',
+                onClick: function(item, button) { alert('* ' + button.text + ': ' + item.text + ' *'); }
+              }
+            ]
+          };
+          $scope.items[1] = {
+            text: 'Item 1 has a different delete icon and delete method',
+            deleteIcon: 'ion-close-circled',
+            onDelete: function(item, button) { alert(item.text); }
+          };
+          $scope.items[2] = {
+            text: 'Item 2 has a different reorder icon',
+            reorderIcon: 'ion-drag'
+          };
+          $scope.items[3] = {
+            text: 'Item 3 has a left icon',
+            itemIconLeft: 'ion-stats-bars'
+          };
+          $scope.items[4] = {
+            text: 'Item 4 has a right icon',
+            itemIconRight: 'ion-star'
+          };
+          $scope.items[5] = {
+            text: 'Item 5 has a left and right icon',
+            itemIconLeft: 'ion-calendar',
+            itemIconRight: 'ion-forward'
+          };
+        }
+        buildMockData();
+
+
+        // Set Display Defaults
+        $scope.editBtnText = 'Edit';
+        $scope.reorderBtnText = 'Reorder';
+
+
+        // List Methods/Properties
+        $scope.refreshHolding = function() {
           console.log('HOLDING FOR REFRESH');
         };
-        $scope.almostRefreshProjects = function(amt) {
-          console.log('ALMOST REFRESHING', amt);
+        $scope.refreshOpening = function(amt) {
+          console.log('REFRESH OPENING', amt);
           $scope.refreshRatio.ratio = amt;
           $scope.$apply();
         };
-
-        $scope.refreshProjects = function() {
+        $scope.refreshItems = function() {
           console.log("REFRESHING");
           $timeout(function() {
+            buildMockData();
             $scope.refreshComplete();
-          }, 2000);
+          }, 1500);
+        };
+        $scope.refreshRatio = { ratio: 0 };
+
+
+        // List Toggles
+        $scope.toggleDelete = function() {
+          $scope.isDeletingItems = !$scope.isDeletingItems;
+          $scope.isReorderingItems = false;
+          $scope.editBtnText = ($scope.isDeletingItems ? 'Done' : 'Edit');
+        };
+        $scope.toggleReorder = function() {
+          $scope.isReorderingItems = !$scope.isReorderingItems;
+          $scope.isDeletingItems = false;
+          $scope.reorderBtnText = ($scope.isReorderingItems ? 'Done' : 'Reorder');
         };
 
-        $scope.items = [];
-        for(var i = 0; i < 20; i++) {
-          $scope.items.push({
-            text: 'Item ' + i,
-            canDelete: true,
-            canSwipe: true,
-            canReorder: true,
-            icon: 'icon-chevron-right',
-            hide: false,
-            deleteItem: removeItem,
-            buttons: [{
-              text: 'Kill',
-              type: 'button-danger',
-              buttonClicked: removeItem,
-            }]
-          });
-        }
 
-        $scope.edit = function() {
-          $scope.isEditingItems = !$scope.isEditingItems;
-        }
+        // Item Methods/Properties
+        $scope.deleteItem = function(item) {
+          $scope.items.splice($scope.items.indexOf(item), 1);
+        };
+        $scope.itemOptionButtons = [
+          {
+            text: 'Edit',
+            onClick: function(item, button) { alert(button.text + ': ' + item.text) }
+          },
+          {
+            text: 'Share',
+            onClick: function(item, button) { alert(button.text + ': ' + item.text) }
+          }
+        ];
+
+
       });
-
     </script>
   </body>
 </html>
