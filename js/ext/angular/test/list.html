@@ -80,26 +80,51 @@
               on-refresh-opening="refreshOpening(ratio)"
               on-refresh="refreshItems()"
               refresh-complete="refreshComplete"
-              animation="my-repeat-animation">
+              on-delete="deleteListItem"
+              delete-icon="ion-minus-circled"
+              reorder-icon="ion-navicon"
+              animation="my-repeat-animation"
+              can-delete="true"
+              can-reorder="true"
+              can-swipe="true"
+              option-buttons="optionButtons1"
+              item-type="item-icon-left">
 
           <refresher></refresher>
 
-          <item ng-repeat="item in items" 
-                item="item"
-                option-buttons="itemOptionButtons"
+          <!-- shows it can override the attributes set by the list -->
+          <item can-delete="false"
+                can-reorder="false"
+                can-swipe="false"
+                item-type="item-icon-left item-icon-right">
+            <i class="icon ion-stats-bars"></i>
+            Individual item directive, but can't do much. Overrides list attributes with its own left and right icons.
+            <i class="icon ion-arrow-graph-up-right"></i>
+          </item>
 
-                delete-icon="ion-minus-circled"
-                reorder-icon="ion-navicon"
-
+          <!-- shows that the item directive can receive many attributes and overrides the list attributes -->
+          <item on-delete="deleteItem"
+                delete-icon="ion-trash-a"
+                reorder-icon="ion-navicon-round"
                 can-delete="true"
                 can-reorder="true"
-                can-swipe="true"
-
-                on-delete="deleteItem(item)">
-            
-            {{ item.text }}
-
+                option-buttons="optionButtons2">
+            <i class="icon ion-person-stalker"></i>
+            Individual item directive and overrides list attrs with item attributes
           </item>
+
+          <!-- shows that the item directive does not need attributes and can get values from the list attributes -->
+          <item ng-repeat="item in items" 
+                item="item">
+            <i class="icon ion-chatbox"></i>
+            Repeat Item: {{ item.text }}
+          </item>
+
+          <!-- shows how a divider could be included-->
+          <div class="item item-divider">
+            Me Divider, just plain ol' HTML nested in the list directive
+          </div>
+
         </list>
       </div>
 
@@ -121,9 +146,9 @@
         // Build Mock Data
         function buildMockData() {
           $scope.items = [];
-          for(var i = 0; i < 50; i++) {
+          for(var i = 0; i < 4; i++) {
             $scope.items.push({
-              text: 'Item ' + i
+              text: i
             });
           }
 
@@ -131,33 +156,17 @@
           $scope.items[0] = {
             text: 'Item 0 has its own option buttons',
             optionButtons: [
-              {
-                text: 'Special Button!',
-                onClick: function(item, button) { alert('* ' + button.text + ': ' + item.text + ' *'); }
+              { 
+                text: 'Special Button', 
+                onClick: function(){ alert("I'm special :)"); } 
               }
             ]
           };
           $scope.items[1] = {
-            text: 'Item 1 has a different delete icon and delete method',
+            text: 'Item 1 has a different delete icon, delete method and reorder icon, all from item data',
             deleteIcon: 'ion-close-circled',
-            onDelete: function(item, button) { alert(item.text); }
-          };
-          $scope.items[2] = {
-            text: 'Item 2 has a different reorder icon',
-            reorderIcon: 'ion-drag'
-          };
-          $scope.items[3] = {
-            text: 'Item 3 has a left icon',
-            itemIconLeft: 'ion-stats-bars'
-          };
-          $scope.items[4] = {
-            text: 'Item 4 has a right icon',
-            itemIconRight: 'ion-star'
-          };
-          $scope.items[5] = {
-            text: 'Item 5 has a left and right icon',
-            itemIconLeft: 'ion-calendar',
-            itemIconRight: 'ion-forward'
+            reorderIcon: 'ion-drag',
+            onDelete: function() { alert('My own delete method! And I choose not to delete myself.'); }
           };
         }
         buildMockData();
@@ -202,19 +211,34 @@
 
         // Item Methods/Properties
         $scope.deleteItem = function(item) {
+          alert('onDelete from the "item" directive on-delete attribute. Lets not delete this item today ok!');
+        };
+        $scope.deleteListItem = function(item) {
+          alert('onDelete from the "list" on-delete attribute');
           $scope.items.splice($scope.items.indexOf(item), 1);
         };
-        $scope.itemOptionButtons = [
+
+        $scope.optionButtons1 = [
           {
             text: 'Edit',
-            onClick: function(item, button) { alert(button.text + ': ' + item.text) }
+            onClick: function(item, button) { alert(button.text + ' Button: ' + item.text) }
           },
           {
             text: 'Share',
-            onClick: function(item, button) { alert(button.text + ': ' + item.text) }
+            onClick: function(item, button) { alert(button.text + ' Button: ' + item.text) }
           }
         ];
 
+        $scope.optionButtons2 = [
+          {
+            text: 'Cancel',
+            onClick: function() { alert('CANCEL!') }
+          },
+          {
+            text: 'Submit',
+            onClick: function() { alert('SUBMIT!') }
+          }
+        ];
 
       });
     </script>

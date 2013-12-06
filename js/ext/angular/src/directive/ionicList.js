@@ -85,90 +85,86 @@ angular.module('ionic.ui.list', ['ngAnimate'])
 .directive('item', [function() {
   return {
     restrict: 'E',
-    require: ['?^list'],
+    require: '?^list',
     replace: true,
     transclude: true,
+
     scope: {
       item: '=',
-      deleteIcon: '@',
-      reorderIcon: '@',
-      onSelect: '&',
-      onDelete: '&',
-      canDelete: '@',
-      canReorder: '@',
-      canSwipe: '@',
+      itemType: '@',
+      canDelete: '=',
+      canReorder: '=',
+      canSwipe: '=',
+      onDelete: '=',
       optionButtons: '=',
-      type: '@'
+      deleteIcon: '@',
+      reorderIcon: '@'
     },
-    template: '<li class="item item-complex">\
-            <div class="item-edit" ng-if="canDelete && insertDelete">\
-              <button class="button button-icon icon" ng-class="item.deleteIcon || deleteIcon" ng-click="deleteClicked()"></button>\
+    
+    template: '<li class="item item-complex" ng-class="itemClass">\
+            <div class="item-edit" ng-if="canDeleteItem && insertDelete">\
+              <button class="button button-icon icon" ng-class="deleteIconClass" ng-click="deleteClicked()"></button>\
             </div>\
             <div class="item-content" ng-transclude></div>\
-            <div class="item-drag" ng-if="canReorder && insertReorder">\
-              <button data-ionic-action="reorder" class="button button-icon icon" ng-class="item.reorderIcon || reorderIcon"></button>\
+            <div class="item-drag" ng-if="canReorderItem && insertReorder">\
+              <button data-ionic-action="reorder" class="button button-icon icon" ng-class="reorderIconClass"></button>\
             </div>\
-            <div class="item-options" ng-if="canSwipe && insertOptions">\
-             <button ng-click="buttonClicked(b)" class="button" ng-class="b.type" ng-repeat="b in optionButtons" ng-bind="b.text"></button>\
+            <div class="item-options" ng-if="canSwipeItem && insertOptions">\
+             <button ng-click="b.onClick(item, b)" class="button" ng-class="b.type" ng-repeat="b in itemOptionButtons" ng-bind="b.text"></button>\
            </div>\
           </li>',
 
     link: function($scope, $element, $attr, list) {
-      // Grab the parent list controller
-      if(list[0]) {
-        list = list[0];
-      } else if(list[1]) {
-        list = list[1];
-      }
 
-      var el = $element[0];
-      var itemContent = el.querySelector('.item-content');
+      var itemData = $scope.item || {};
+      var parentScope = (list && list.scope);
 
-      if($attr.type) {
-        el.classList.add($attr.type);
-      }
+      // Set this item's class, first from the item directive attr, and then the list attr if item not set
+      $scope.itemClass = $scope.itemType || parentScope.itemType;
 
-      // This will override the item's default buttons
-      // if the individual item was given its own buttons property
-      if($scope.item.optionButtons && $scope.item.optionButtons.length) {
-        $scope.optionButtons = $scope.item.optionButtons;
-      }
+      // Set the option buttons which can be revealed by swiping to the left
+      $scope.itemOptionButtons = itemData.optionButtons || $scope.optionButtons || parentScope.optionButtons;
 
       // Decide if it should go in the DOM when it loads
       $scope.insertDelete = false;
       $scope.insertReorder = false;
-      $scope.insertOptions = ($scope.optionButtons && $scope.optionButtons.length > 0);
+      $scope.insertOptions = ($scope.itemOptionButtons && $scope.itemOptionButtons.length > 0);
 
-      if($scope.item.itemIconLeft) {
-        el.classList.add('item-icon-left');
-        angular.element(itemContent).prepend('<i class="icon ' + $scope.item.itemIconLeft + '"></i>')
-      }
+      // Decide if this item can do stuff, and follow a certain priority on where the value comes from
+      $scope.canDeleteItem = ($scope.canDelete === true || $scope.canDelete === false ? $scope.canDelete : parentScope.canDelete);
+      $scope.canReorderItem = ($scope.canReorder === true || $scope.canReorder === false ? $scope.canReorder : parentScope.canReorder);
+      $scope.canSwipeItem = ($scope.canSwipe === true || $scope.canSwipe === false ? $scope.canSwipe : parentScope.canSwipe);
 
-      if($scope.item.itemIconRight) {
-        el.classList.add('item-icon-right');
-        angular.element(itemContent).append('<i class="icon ' + $scope.item.itemIconRight + '"></i>')
-      }
+      // Set which icons to use for deleting and reordering, and ends up wth defaults
+      $scope.deleteIconClass = itemData.deleteIcon || $scope.deleteIcon || parentScope.deleteIcon || 'ion-minus-circled';
+      $scope.reorderIconClass = itemData.reorderIcon || $scope.reorderIcon || parentScope.reorderIcon || 'ion-navicon';
 
       $scope.deleteClicked = function() {
-        if($scope.item.onDelete) {
-          $scope.item.onDelete($scope.item);
+        if(itemData.onDelete) {
+          // this item data has its own onDelete method
+          itemData.onDelete(itemData);
+
+        } else if($attr.onDelete) {
+          // this item has an on-delete attribute
+          $scope.onDelete(itemData);
+
         } else {
-          $scope.onDelete($scope.item);
+          // run the parent list's onDelete method
+          // if it doesn't exist nothing will happen
+          parentScope.onDelete(itemData);
         }
       };
 
-      $scope.buttonClicked = function(button) {
-        button.onClick && button.onClick($scope.item, button);
-      };
-
-      var destroyShowDeleteWatch = list.scope.$watch('showDelete', function(val) {
+      // Watch the parent list's showDelete and showReorder
+      var destroyShowDeleteWatch = parentScope.$watch('showDelete', function(val) {
         if(val) $scope.insertDelete = true;
       });
 
-      var destroyShowReorderWatch = list.scope.$watch('showReorder', function(val) {
+      var destroyShowReorderWatch = parentScope.$watch('showReorder', function(val) {
         if(val) $scope.insertReorder = true;
       });
 
+      // remove the watches when this item destroys
       $scope.$on('$destroy', function () {
         destroyShowDeleteWatch();
         destroyShowReorderWatch();
@@ -184,25 +180,27 @@ angular.module('ionic.ui.list', ['ngAnimate'])
     transclude: true,
 
     scope: {
+      itemType: '@',
+      canDelete: '=',
+      canReorder: '=',
+      canSwipe: '=',
       showDelete: '=',
       showReorder: '=',
       hasPullToRefresh: '@',
       onRefresh: '&',
       onRefreshOpening: '&',
-      refreshComplete: '='
-    },
-
-    controller: function($scope) {
-      // var _this = this;
-
-      // $scope.$watch('showDelete', function(v) {
-      //   _this.showDelete = true;
-      // });
-
-      this.scope = $scope;
+      refreshComplete: '=',
+      onDelete: '=',
+      optionButtons: '=',
+      deleteIcon: '@',
+      reorderIcon: '@'
     },
 
     template: '<ul class="list" ng-class="{\'list-editing\': showDelete, \'list-reordering\': showReorder}" ng-transclude></ul>',
+
+    controller: function($scope) {
+      this.scope = $scope;
+    },
 
     link: function($scope, $element, $attr) {
       var lv = new ionic.views.ListView({
