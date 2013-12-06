@@ -92,6 +92,18 @@
 
           <refresher></refresher>
 
+          <!-- shows that the item directive does not need attributes and can get values from the list attributes -->
+          <item ng-repeat="item in items" 
+                item="item">
+            <i class="icon ion-chatbox"></i>
+            Repeat Item: {{ item.text }}
+          </item>
+
+          <!-- shows how a divider could be included-->
+          <div class="item item-divider">
+            Me Divider, just plain ol' HTML nested in the list directive.
+          </div>
+
           <!-- shows it can override the attributes set by the list -->
           <item can-delete="false"
                 can-reorder="false"
@@ -115,23 +127,10 @@
 
           <!-- shows how a divider could be included-->
           <div class="item item-divider">
-            Me Divider, just plain ol' HTML nested in the list directive.
-          </div>
-
-          <!-- shows that the item directive does not need attributes and can get values from the list attributes -->
-          <item ng-repeat="item in items" 
-                item="item">
-            <i class="icon ion-chatbox"></i>
-            Repeat Item: {{ item.text }}
-          </item>
-
-          <!-- shows how a divider could be included-->
-          <div class="item item-divider">
             Below is NOT using the item directive, but just nested HTML
           </div>
 
           <!-- shows how very simple lists don't need the item directive at all -->
-
           <div class="item item-thumbnail-left">
             <img src="http://pbs.twimg.com/profile_images/2913427048/ed94193baa04ace85aa8a8bf4bf6c5a9.jpeg">
             <h2>Nic Cage</h2>
@@ -171,8 +170,8 @@
           }
 
           // shows how individual items can have different options
-          $scope.items[0] = {
-            text: 'Item 0 has its own option buttons',
+          $scope.items[1] = {
+            text: 'Item 1 has its own option buttons',
             optionButtons: [
               { 
                 text: 'Special Button', 
@@ -180,8 +179,8 @@
               }
             ]
           };
-          $scope.items[1] = {
-            text: 'Item 1 has a different delete icon, delete method and reorder icon, all from item data',
+          $scope.items[2] = {
+            text: 'Item 2 has a different delete icon, delete method and reorder icon, all from item data',
             deleteIcon: 'ion-close-circled',
             reorderIcon: 'ion-drag',
             onDelete: function() { alert('My own delete method! And I choose not to delete myself.'); }
