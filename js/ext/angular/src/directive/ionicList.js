@@ -92,24 +92,24 @@ angular.module('ionic.ui.list', ['ngAnimate'])
     scope: {
       item: '=',
       itemType: '@',
-      canDelete: '=',
-      canReorder: '=',
-      canSwipe: '=',
+      canDelete: '&',
+      canReorder: '&',
+      canSwipe: '&',
       onDelete: '=',
-      optionButtons: '=',
+      optionButtons: '&',
       deleteIcon: '@',
       reorderIcon: '@'
     },
-    
+
     template: '<li class="item item-complex" ng-class="itemClass">\
-            <div class="item-edit" ng-if="canDeleteItem && insertDelete">\
+            <div class="item-edit" ng-if="insertDelete">\
               <button class="button button-icon icon" ng-class="deleteIconClass" ng-click="deleteClicked()"></button>\
             </div>\
             <div class="item-content" ng-transclude></div>\
-            <div class="item-drag" ng-if="canReorderItem && insertReorder">\
+            <div class="item-drag" ng-if="insertReorder">\
               <button data-ionic-action="reorder" class="button button-icon icon" ng-class="reorderIconClass"></button>\
             </div>\
-            <div class="item-options" ng-if="canSwipeItem && insertOptions">\
+            <div class="item-options" ng-if="itemOptionButtons.length">\
              <button ng-click="b.onClick(item, b)" class="button" ng-class="b.type" ng-repeat="b in itemOptionButtons" ng-bind="b.text"></button>\
            </div>\
           </li>',
@@ -125,15 +125,25 @@ angular.module('ionic.ui.list', ['ngAnimate'])
       // Set the option buttons which can be revealed by swiping to the left
       $scope.itemOptionButtons = itemData.optionButtons || $scope.optionButtons || parentScope.optionButtons;
 
-      // Decide if it should go in the DOM when it loads
-      $scope.insertDelete = false;
-      $scope.insertReorder = false;
-      $scope.insertOptions = ($scope.itemOptionButtons && $scope.itemOptionButtons.length > 0);
-
       // Decide if this item can do stuff, and follow a certain priority on where the value comes from
-      $scope.canDeleteItem = ($scope.canDelete === true || $scope.canDelete === false ? $scope.canDelete : parentScope.canDelete);
-      $scope.canReorderItem = ($scope.canReorder === true || $scope.canReorder === false ? $scope.canReorder : parentScope.canReorder);
-      $scope.canSwipeItem = ($scope.canSwipe === true || $scope.canSwipe === false ? $scope.canSwipe : parentScope.canSwipe);
+      $scope.insertDelete = $scope.canDelete();
+      if(typeof $scope.insertDelete === "undefined") {
+        $scope.insertDelete = parentScope.canDelete();
+      }
+      $scope.insertReorder = $scope.canReorder();
+      if(typeof $scope.insertReorder === "undefined") {
+        $scope.insertReorder = parentScope.canReorder();
+      }
+      var insertOptions = $scope.canSwipe();
+      if(typeof insertOptions === "undefined") {
+        insertOptions = parentScope.canSwipe();
+      }
+      if(insertOptions) {
+        $scope.itemOptionButtons = itemData.optionButtons || $scope.optionButtons();
+        if(typeof $scope.itemOptionButtons === "undefined") {
+          $scope.itemOptionButtons = parentScope.optionButtons();
+        }
+      }
 
       // Set which icons to use for deleting and reordering, and ends up wth defaults
       $scope.deleteIconClass = itemData.deleteIcon || $scope.deleteIcon || parentScope.deleteIcon || 'ion-minus-circled';
@@ -155,20 +165,6 @@ angular.module('ionic.ui.list', ['ngAnimate'])
         }
       };
 
-      // Watch the parent list's showDelete and showReorder
-      var destroyShowDeleteWatch = parentScope.$watch('showDelete', function(val) {
-        if(val) $scope.insertDelete = true;
-      });
-
-      var destroyShowReorderWatch = parentScope.$watch('showReorder', function(val) {
-        if(val) $scope.insertReorder = true;
-      });
-
-      // remove the watches when this item destroys
-      $scope.$on('$destroy', function () {
-        destroyShowDeleteWatch();
-        destroyShowReorderWatch();
-      });
     }
   };
 }])
@@ -181,9 +177,9 @@ angular.module('ionic.ui.list', ['ngAnimate'])
 
     scope: {
       itemType: '@',
-      canDelete: '=',
-      canReorder: '=',
-      canSwipe: '=',
+      canDelete: '&',
+      canReorder: '&',
+      canSwipe: '&',
       showDelete: '=',
       showReorder: '=',
       hasPullToRefresh: '@',
@@ -191,7 +187,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
       onRefreshOpening: '&',
       refreshComplete: '=',
       onDelete: '=',
-      optionButtons: '=',
+      optionButtons: '&',
       deleteIcon: '@',
       reorderIcon: '@'
     },
